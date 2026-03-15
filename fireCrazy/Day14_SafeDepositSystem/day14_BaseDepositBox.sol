@@ -1,12 +1,47 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./day14_BaseDepositBox.sol";
+// 【修复点】：引用完美匹配你的文件名
+import "./day14_IDepositBox.sol"; 
 
-contract BasicDepositBox is BaseDepositBox {
-    
-    // 【修复点】：严格对齐接口里的 pure 和 returns (string memory)
-    function getBoxType() external pure override returns (string memory) {
-        return "Basic";
+abstract contract BaseDepositBox is IDepositBox {
+    address private owner;
+    string private secret;
+    uint256 private depositTime;
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event SecretStored(address indexed owner);
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Not the box owner");
+        _;
+    }
+
+    constructor() {
+        owner = msg.sender;
+        depositTime = block.timestamp;
+    }
+
+    function getOwner() public view override returns (address) {
+        return owner;
+    }
+
+    function transferOwnership(address newOwner) external virtual override onlyOwner {
+        require(newOwner != address(0), "New owner cannot be zero address");
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+
+    function storeSecret(string calldata _secret) external virtual override onlyOwner {
+        secret = _secret;
+        emit SecretStored(msg.sender);
+    }
+
+    function getSecret() public view virtual override onlyOwner returns (string memory) {
+        return secret;
+    }
+
+    function getDepositTime() external view virtual override returns (uint256) {
+        return depositTime;
     }
 }
