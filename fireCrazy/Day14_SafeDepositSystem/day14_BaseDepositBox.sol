@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./day14_IDepositBox.sol"; // 导入接口
+import "./day14_BaseDepositBox.sol";
 
-abstract contract BaseDepositBox is IDepositBox {
-    // ... 这里放 BaseDepositBox 的所有代码 ...
+contract BasicDepositBox is BaseDepositBox {
+    
+    // 【修复点】：严格对齐接口里的 pure 和 returns (string memory)
+    function getBoxType() external pure override returns (string memory) {
+        return "Basic";
+    }
 }
