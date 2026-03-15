@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "./SimpleERC20.sol"; // 把昨天的印钞机代码拿过来
+import "./day12_SimpleERC20.sol"; // 把昨天的印钞机代码拿过来
 
 contract SimplifiedTokenSale is SimpleERC20 { // 继承印钞机，这个专卖店本身也能印钱、管账
     
