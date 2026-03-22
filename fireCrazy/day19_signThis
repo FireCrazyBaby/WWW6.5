@@ -1,0 +1,51 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract VerifySignature {
+    /*
+    * 1. 将消息内容打包并生成哈希指纹
+    */
+    function getMessageHash(address _to, uint256 _amount) public pure returns (bytes32) {
+        return keccak256(abi.encodePacked(_to, _amount));
+    }
+
+    /*
+    * 2. 这里的核心是 ecrecover 函数
+    * 它接收哈希和签名（v, r, s），返回签署人的地址
+    */
+    function verify(
+        address _signer,    // 预期的签名人（你）
+        address _to,        // 给谁发奖
+        uint256 _amount,    // 发多少
+        bytes memory _signature // 刚才在链下生成的长签名
+    ) public pure returns (bool) {
+        bytes32 messageHash = getMessageHash(_to, _amount);
+        // 以太坊签名消息需要加一个标准前缀，防止签名被恶意冒用
+        bytes32 ethSignedMessageHash = getEthSignedMessageHash(messageHash);
+
+        return recoverSigner(ethSignedMessageHash, _signature) == _signer;
+    }
+
+    // 内部工具：拆解签名字符串，提取出 v, r, s
+    function splitSignature(bytes memory _sig) public pure returns (bytes32 r, bytes32 s, uint8 v) {
+        require(_sig.length == 65, "invalid signature length");
+
+        assembly {
+            // 利用汇编直接读取内存中的数据，非常高效
+            r := mload(add(_sig, 32)) // 跳过前32字节（长度信息），取前32字节数据
+            s := mload(add(_sig, 64)) // 再取后32字节
+            v := byte(0, mload(add(_sig, 96))) // 最后取1个字节
+        }
+    }
+
+    function recoverSigner(bytes32 _ethSignedMessageHash, bytes memory _signature) public pure returns (address) {
+        (bytes32 r, bytes32 s, uint8 v) = splitSignature(_signature);
+        // 以太坊核心函数：通过指纹和vrs找回签名者
+        return ecrecover(_ethSignedMessageHash, v, r, s);
+    }
+
+    // 标准前缀函数
+    function getEthSignedMessageHash(bytes32 _messageHash) public pure returns (bytes32) {
+        return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _messageHash));
+    }
+}
